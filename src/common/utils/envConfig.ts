@@ -23,6 +23,8 @@ const envSchema = z.object({
     .url()
     .default('postgresql://postgres:secret@localhost:5432/evalio'),
 
+  REDIS_URL: z.string().url().default('redis://localhost:6379'),
+
   GOTENBERG_URL: z.string().url().default('http://localhost:3030'),
   GOTENBERG_USERNAME: z.string(),
   GOTENBERG_PASSWORD: z.string(),

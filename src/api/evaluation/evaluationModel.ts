@@ -10,9 +10,7 @@ extendZodWithOpenApi(z);
 // Schema for the `POST /evaluate` request body
 export const EvaluatePayloadSchema = z.object({
   body: z.object({
-    candidateEmail: z
-      .string()
-      .email('A valid email for the candidate is required.'),
+    candidateId: z.string().uuid('A valid candidateId is required.'),
     jobVacancyId: z.string().uuid('A valid jobVacancyId is required.'),
   }),
 });

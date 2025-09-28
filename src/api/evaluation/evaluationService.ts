@@ -1,63 +1,60 @@
 import { StatusCodes } from 'http-status-codes';
+import { candidateService } from '@/api/candidate/candidateService';
 import { ServiceResponse } from '@/common/models/serviceResponse';
+// import { evaluationQueue } from '@/jobs/evaluationQueue';
 import { logger } from '@/server';
-import { aiExtractorService } from '@/services/aiExtractorService';
-
-// Mocked external services
-import { textExtractorService } from '@/services/textExtractorService';
-import { evaluationRepository } from './evaluationRepository';
+import { jobVacancyService } from '../jobVacancy/jobVacancyService';
 
 class EvaluationService {
-  public async processUploads(
-    cvFile: Express.Multer.File & { location: string }, // multer-s3 adds 'location'
-    projectReportFile: Express.Multer.File & { location: string }
+  public async processEvaluate(
+    candidateId: string,
+    jobVacancyId: string
   ): Promise<ServiceResponse<any>> {
     try {
-      // Step 1 & 2: Extract text and candidate info (no changes here)
-      const cvText = await textExtractorService.extractTextFromUrl(
-        cvFile.location
-      );
-      if (!cvText) {
+      const candidate = await candidateService.findById(candidateId);
+      if (!candidate.data) {
         return ServiceResponse.failure(
-          'Failed to extract text from CV.',
+          'Candidate not found.',
           null,
-          StatusCodes.INTERNAL_SERVER_ERROR
+          candidate.statusCode
         );
       }
 
-      const candidateInfo = await aiExtractorService.extractCandidateInfo(
-        cvText
-      );
-      if (!candidateInfo?.email || !candidateInfo?.fullName) {
+      const jobVacancy = await jobVacancyService.findById(jobVacancyId);
+      if (!jobVacancy.data) {
         return ServiceResponse.failure(
-          'Could not extract candidate name and email from CV.',
+          'Job vacancy not found.',
           null,
-          StatusCodes.BAD_REQUEST
+          jobVacancy.statusCode
         );
       }
 
-      // Step 3: Save to the database (no changes here)
-      const repoResult =
-        await evaluationRepository.upsertCandidateWithDocuments({
-          email: candidateInfo.email,
-          fullName: candidateInfo.fullName,
-          cvPath: cvFile.location, // Note: We save the URL in the DB now
-          projectReportPath: projectReportFile.location,
-        });
+      const candidateDocuments = candidate.data.documents;
 
-      // --- CHANGE IS HERE ---
-      // Construct the new, simpler response payload
-      const responsePayload = {
-        candidateId: repoResult.candidateId,
-        urls: {
-          cv: cvFile.location,
-          projectReport: projectReportFile.location,
-        },
+      if (!candidateDocuments || candidateDocuments.length === 0) {
+        return ServiceResponse.failure(
+          'Candidate documents not found.',
+          null,
+          candidate.statusCode
+        );
+      }
+
+      // for (const document of candidateDocuments) {
+      //   // evaluate cv
+      //   await evaluationQueue.add('evaluate-cv', {});
+      //   // evaluate project report
+      //   await evaluationQueue.add('evaluate-cv', {});
+      // }
+
+      const data = {
+        id: '456',
+        status: 'queued',
       };
 
+      // Step 1 & 2: Extract text and candidate info (no changes here)
       return ServiceResponse.success(
-        'Files processed successfully.',
-        responsePayload,
+        'Documents processed successfully.',
+        data,
         StatusCodes.CREATED
       );
     } catch (ex) {
