@@ -1,0 +1,65 @@
+services:
+  # Your application database using its original, default configuration
+  db:
+    image: pgvector/pgvector:pg17
+    restart: always
+    shm_size: 1g
+    environment:
+      # This uses the default 'postgres' user and creates a 'postgres' db
+      POSTGRES_PASSWORD: secret
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - my-app-network
+    healthcheck:
+      # Updated to check for the default 'postgres' user
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis service, required by Inngest
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - my-app-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: always
+    ports:
+      - '3030:3000'
+    environment:
+      - API_ENABLE_BASIC_AUTH=true
+      - GOTENBERG_API_BASIC_AUTH_USERNAME=user
+      - GOTENBERG_API_BASIC_AUTH_PASSWORD=pass
+  # Your existing Adminer service
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - '8080:8080'
+    networks:
+      - my-app-network
+
+# Defines the persistent storage volumes
+volumes:
+  postgres_data:
+  redis_data:
+
+# Defines the shared network for all services
+networks:
+  my-app-network:
+    driver: bridge
