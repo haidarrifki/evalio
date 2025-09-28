@@ -15,6 +15,7 @@ const { R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME } =
 
 /**
  * A filter function to ensure only allowed file types are uploaded.
+ * @param req The request with validation from Express.
  * @param file The file object from Multer.
  * @param cb The callback to signal if the file is accepted or rejected.
  */
@@ -46,11 +47,9 @@ async function sanitizeFile(
 
     const serviceResponse = await candidateService.findById(candidateId);
     if (serviceResponse.data) {
-      // ✅ Candidate found! Mark as validated and accept the file.
       req.candidateValidated = true;
       callback(null, true);
     } else {
-      // ❌ Candidate not found. Reject the file.
       callback(new Error('Candidate not found. Upload rejected.'));
     }
   } catch (error) {

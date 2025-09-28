@@ -7,8 +7,6 @@ import {
   DocumentUploadSchema,
 } from '@/api/document/documentModel';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
-// import { validateRequest } from '@/common/utils/httpHandlers';
-import { upload } from '@/common/utils/upload';
 
 export const documentRegistry = new OpenAPIRegistry();
 export const documentRouter: Router = express.Router();
@@ -39,14 +37,4 @@ documentRegistry.registerPath({
 });
 
 // Update the route path for clarity, e.g., /documents/upload
-documentRouter.post(
-  '/upload',
-  // The multer middleware must come BEFORE any validation of the body
-  upload.fields([
-    { name: 'cvFile', maxCount: 1 },
-    { name: 'projectReportFile', maxCount: 1 },
-  ]),
-  // Now you can validate the body (for candidateId)
-  // validateRequest(DocumentUploadRequestSchema),
-  documentController.upload
-);
+documentRouter.post('/upload', documentController.upload);

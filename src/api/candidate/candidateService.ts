@@ -15,10 +15,7 @@ class CandidateService {
     try {
       const candidates = await this.candidateRepository.findAll();
       if (candidates.length === 0) {
-        return ServiceResponse.failure(
-          'No candidates found.',
-          []
-        );
+        return ServiceResponse.failure('No candidates found.', []);
       }
       return ServiceResponse.success('Candidates found.', candidates);
     } catch (ex) {

@@ -37,6 +37,13 @@ export class DocumentService {
 
   public async findById(id: string): Promise<ServiceResponse<Document | null>> {
     try {
+      if (!id) {
+        return ServiceResponse.failure(
+          'candidateId is required in the request body.',
+          null,
+          StatusCodes.BAD_REQUEST
+        );
+      }
       const document = await this.documentRepository.findById(id);
       if (!document) {
         return ServiceResponse.failure(
@@ -67,6 +74,14 @@ export class DocumentService {
     ServiceResponse<{ cv: Document; projectReport: Document } | null>
   > {
     try {
+      if (!cvFile || !projectReportFile) {
+        return ServiceResponse.failure(
+          'cvFile and projectReportFile are required.',
+          null,
+          StatusCodes.BAD_REQUEST
+        );
+      }
+
       const cvDocumentPayload = {
         candidateId,
         name: cvFile.originalname,
@@ -87,7 +102,11 @@ export class DocumentService {
       ]);
 
       if (!newCv || !newProjectReport) {
-        throw new Error('One or more documents could not be created.');
+        return ServiceResponse.failure(
+          'cv and project report document could not be created.',
+          null,
+          StatusCodes.BAD_REQUEST
+        );
       }
 
       const createdDocuments = { cv: newCv, projectReport: newProjectReport };
