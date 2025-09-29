@@ -66,7 +66,37 @@ export class DocumentService {
     }
   }
 
-  public async upload(
+  public async update(
+    id: string,
+    payload: Partial<Document>
+  ): Promise<ServiceResponse<Document | null>> {
+    try {
+      const updatedDocument = await this.documentRepository.update(id, payload);
+      if (!updatedDocument) {
+        return ServiceResponse.failure(
+          'Document not found for update.',
+          null,
+          StatusCodes.NOT_FOUND
+        );
+      }
+      return ServiceResponse.success(
+        'Document updated successfully.',
+        updatedDocument
+      );
+    } catch (ex) {
+      const errorMessage = `Error updating document with id ${id}: ${
+        (ex as Error).message
+      }`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while updating the document.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  public async processUpload(
     candidateId: string,
     cvFile: Express.MulterS3.File,
     projectReportFile: Express.MulterS3.File
@@ -87,6 +117,10 @@ export class DocumentService {
         name: cvFile.originalname,
         documentType: 'cv' as const,
         fileKey: cvFile.key,
+        metadata: {
+          size: cvFile.size,
+          mimeType: cvFile.mimetype,
+        },
       };
 
       const projectReportPayload = {
@@ -94,6 +128,10 @@ export class DocumentService {
         name: projectReportFile.originalname,
         documentType: 'project_report' as const,
         fileKey: projectReportFile.key,
+        metadata: {
+          size: projectReportFile.size,
+          mimeType: projectReportFile.mimetype,
+        },
       };
 
       const [newCv, newProjectReport] = await Promise.all([

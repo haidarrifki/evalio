@@ -32,7 +32,7 @@ class DocumentController {
       const cvFile = files?.cvFile?.[0];
       const projectReportFile = files?.projectReportFile?.[0];
 
-      const document = await documentService.upload(
+      const document = await documentService.processUpload(
         candidateId,
         cvFile,
         projectReportFile

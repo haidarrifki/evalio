@@ -1,6 +1,7 @@
 import { relations } from 'drizzle-orm';
 import {
   decimal,
+  json,
   pgEnum,
   pgTable,
   // primaryKey,
@@ -52,6 +53,7 @@ export const documents = pgTable('documents', {
   uploadedAt: timestamp('uploaded_at', { withTimezone: true })
     .defaultNow()
     .notNull(),
+  metadata: json(),
 });
 
 export const jobVacancies = pgTable('job_vacancies', {

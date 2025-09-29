@@ -1,7 +1,8 @@
+import type { Job } from 'bullmq';
 import { StatusCodes } from 'http-status-codes';
 import { candidateService } from '@/api/candidate/candidateService';
 import { ServiceResponse } from '@/common/models/serviceResponse';
-// import { evaluationQueue } from '@/jobs/evaluationQueue';
+import { evaluationQueue } from '@/jobs/evaluationQueue';
 import { logger } from '@/server';
 import { jobVacancyService } from '../jobVacancy/jobVacancyService';
 
@@ -39,16 +40,14 @@ class EvaluationService {
         );
       }
 
-      // for (const document of candidateDocuments) {
-      //   // evaluate cv
-      //   await evaluationQueue.add('evaluate-cv', {});
-      //   // evaluate project report
-      //   await evaluationQueue.add('evaluate-cv', {});
-      // }
+      const job: Job = await evaluationQueue.add('evaluate-candidate', {
+        documents: candidateDocuments,
+      });
 
+      const status = await job.getState();
       const data = {
-        id: '456',
-        status: 'queued',
+        id: job.id,
+        status,
       };
 
       // Step 1 & 2: Extract text and candidate info (no changes here)

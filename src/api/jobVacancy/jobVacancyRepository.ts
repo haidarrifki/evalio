@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { db, jobVacancies } from '@/db';
+import { db, jobVacancies } from '@/common/db';
 
 export class JobVacancyRepository {
   public async findById(id: string) {

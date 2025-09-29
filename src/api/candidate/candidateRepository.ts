@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm';
-import { candidates, db } from '@/db';
+import { candidates, db } from '@/common/db';
 
 // Define types for create and update payloads
 type NewCandidate = typeof candidates.$inferInsert;

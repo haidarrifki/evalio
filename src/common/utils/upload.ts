@@ -1,17 +1,14 @@
-import { S3Client } from '@aws-sdk/client-s3';
 import type { Request } from 'express';
 import multer, { type FileFilterCallback } from 'multer';
 import multerS3 from 'multer-s3';
 import path from 'path';
 import { candidateService } from '@/api/candidate/candidateService';
 import { env } from '@/common/utils/envConfig';
+import { s3 } from './s3Client';
 
 interface RequestWithValidation extends Request {
   candidateValidated?: boolean;
 }
-
-const { R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME } =
-  env;
 
 /**
  * A filter function to ensure only allowed file types are uploaded.
@@ -58,20 +55,10 @@ async function sanitizeFile(
   }
 }
 
-// --- Configure the S3 client for Cloudflare R2 ---
-const s3 = new S3Client({
-  region: 'auto', // R2 is region-less
-  endpoint: R2_ENDPOINT!, // e.g., 'https://<ACCOUNT_ID>.r2.cloudflarestorage.com'
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID!,
-    secretAccessKey: R2_SECRET_ACCESS_KEY!,
-  },
-});
-
 export const upload = multer({
   storage: multerS3({
     s3,
-    bucket: R2_BUCKET_NAME!, // Your R2 bucket name
+    bucket: env.R2_BUCKET_NAME!, // Your R2 bucket name
     contentType: multerS3.AUTO_CONTENT_TYPE,
     key: (req: Request, file, cb) => {
       // 1. Get the candidateId from the request body.

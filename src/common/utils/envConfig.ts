@@ -33,6 +33,8 @@ const envSchema = z.object({
   R2_ACCESS_KEY_ID: z.string(),
   R2_SECRET_ACCESS_KEY: z.string(),
   R2_BUCKET_NAME: z.string(),
+
+  GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
