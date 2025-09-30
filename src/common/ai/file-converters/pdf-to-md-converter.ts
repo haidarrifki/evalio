@@ -2,31 +2,21 @@ import { GoogleGenAI, type Part } from '@google/genai';
 import { env } from '@/common/utils/envConfig';
 
 const pdfToMdSystemPrompt = `\
-You are an advanced AI document processing tool. Your task is to convert a PDF document into Markdown format while preserving the original layout and structure.
-You will receive a PDF document as input, and your output should be a well-structured Markdown document that accurately represents the content of the PDF.
-The PDF may contain text, images, tables, and other elements. Your goal is to extract all relevant information and format it appropriately in Markdown.
-Your output should include the following:
-- Text Content:** Extract all text from the PDF and format it in Markdown, maintaining headings, paragraphs, and lists.
-- Headings:** Use appropriate Markdown syntax for headings (e.g., # for H1, ## for H2, etc.).
-- Lists:** Convert bullet points and numbered lists into Markdown lists.
-- Links:** Convert any hyperlinks into Markdown format.
-- Images:** For each image, include an HTML <img> tag with:
-  - \`src="[image-placeholder]"\`
-  - An \`alt\` attribute providing a detailed executive summary of the image's content.
-  - If the image is a graph or chart, provide an in-depth description of the data and its implications.
-- Tables: ** Convert tables into Markdown format, ensuring proper alignment and structure.
-- Text Formatting:** Maintain bold, italic, and underline formatting where applicable.
-- Footnotes and Endnotes:** Convert footnotes and endnotes into Markdown format.
-- Page Numbers:** Include page numbers in the output for reference.
-- Metadata:** Include any relevant metadata (e.g., title, author, date) at the beginning of the document.
-- Document Structure:** Maintain the original document structure, including sections and subsections.
-- Accessibility:** Ensure the output is accessible, with appropriate alt text for images and clear headings for screen readers.
-- Clarity and Readability:** Ensure the output is clear and easy to read, with appropriate line breaks and spacing.
-- Markdown Syntax:** Use standard Markdown syntax for all formatting.
-- No Additional Text:** Do not include any additional text or explanations.
-- No Personal Opinions:** Do not include any personal opinions or subjective statements in the output.
+You are an expert AI specializing in converting structured documents like CVs, resumes, and technical reports into precise Markdown. Your primary goal is to understand and preserve the logical flow and semantic hierarchy of the document, not just its visual, multi-column layout.
 
-VERY IMPORTANT!!!!: NO TRIPLE BACKTICKS:** DO NOT SURROUND THE OUTPUT WITH TRIPLE BACKTICKS FOR ANY CONTENT!!!!
+- **Logical Section Ordering:** Identify distinct sections (e.g., Profile, Skills, Experience, Education, Projects) and ensure they are presented in a coherent, logical order in the final Markdown. All entries within a single section, like 'Experience', must be grouped together.
+- **Text Content:** Extract all text and format it cleanly, maintaining paragraphs and lists.
+- **Headings:** Use correct Markdown heading syntax (#, ##, etc.) reflecting the document's hierarchy.
+- **Lists:** Convert all bulleted and numbered lists accurately.
+- **Text Formatting:** Preserve bold, italic, and other text formatting.
+- **Links:** Convert hyperlinks into proper Markdown format.
+- **Images:** For each image, use an HTML <img> tag:
+  - Use \`src="[image-placeholder]"\`.
+  - Write a concise, descriptive executive summary of the image's content for the \`alt\` attribute. For graphs, summarize the data and its key takeaways.
+- **Tables:** Convert tables into Markdown format with correct alignment.
+- **Clarity and Syntax:** Use standard, readable Markdown. Do not add any personal opinions, commentary, or text that wasn't in the original document.
+
+VERY IMPORTANT: The output must be ONLY the raw Markdown content. DO NOT wrap the output in triple backticks (\`\`\`) under any circumstances.
 `;
 
 export class PdfToMarkdownConverter {
@@ -38,24 +28,22 @@ export class PdfToMarkdownConverter {
    * Removes any triple backticks that might be surrounding the markdown content
    */
   private postProcessMarkdown(text: string): string {
-    // Remove markdown code block indicators if they exist
-    if (text.startsWith('```markdown') || text.startsWith('```md')) {
-      const closingBackticksIndex = text.lastIndexOf('```');
-      if (closingBackticksIndex !== -1) {
-        // Find the first newline after the opening backticks
-        const newlineIndex = text.indexOf('\n');
-        if (newlineIndex !== -1 && newlineIndex < closingBackticksIndex) {
-          // Extract only the content between the opening and closing backticks
-          return text.substring(newlineIndex + 1, closingBackticksIndex).trim();
-        }
-      }
+    const trimmedText = text.trim();
+    if (
+      (trimmedText.startsWith('```markdown') ||
+        trimmedText.startsWith('```md')) &&
+      trimmedText.endsWith('```')
+    ) {
+      return trimmedText
+        .substring(
+          trimmedText.indexOf('\n') + 1,
+          trimmedText.lastIndexOf('```')
+        )
+        .trim();
     }
-
-    // Also handle the case where there are just plain triple backticks with no language specifier
-    if (text.startsWith('```') && text.endsWith('```')) {
-      return text.substring(3, text.length - 3).trim();
+    if (trimmedText.startsWith('```') && trimmedText.endsWith('```')) {
+      return trimmedText.substring(3, trimmedText.length - 3).trim();
     }
-
     return text;
   }
 
@@ -75,7 +63,11 @@ export class PdfToMarkdownConverter {
             data: pdfBase64,
           },
         },
-        { text: 'Convert the PDF to Markdown format.' },
+        // --- IMPROVED USER PROMPT ---
+        // This adds specific context about the document type.
+        {
+          text: 'Convert this CV PDF into a clean, well-structured Markdown document. Pay close attention to the logical order of all sections.',
+        },
       ];
 
       const result = await this.ai.models.generateContent({
@@ -85,9 +77,6 @@ export class PdfToMarkdownConverter {
           systemInstruction: pdfToMdSystemPrompt,
         },
       });
-
-      console.log('>>> RESULT GOOGLE GEMINI');
-      console.log(result);
 
       // Check if response text exists
       if (!result.text) {
