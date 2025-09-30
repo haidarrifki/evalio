@@ -2,6 +2,8 @@ import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { type Job, Worker } from 'bullmq';
 import type { InferSelectModel } from 'drizzle-orm';
 import { documentService } from '@/api/document/documentService';
+import { documentChunkService } from '@/api/documentChunk/documentChunkService';
+import { JinaEmbeddings } from '@/common/ai/embeddings/jina-embeddings';
 import {
   GotenbergClient,
   PdfToMarkdownConverter,
@@ -24,46 +26,58 @@ const processEvaluationJob = async (job: Job<EvaluationJobData>) => {
   try {
     for (const document of documents) {
       const { id, name, fileKey, metadata } = document;
-      const { mimeType } = metadata as {
-        size: string;
-        mimeType: string;
-      };
+      // const { mimeType } = metadata as {
+      //   size: string;
+      //   mimeType: string;
+      // };
 
-      const command = new GetObjectCommand({
-        Bucket: env.R2_BUCKET_NAME!,
-        Key: fileKey,
-      });
-      const { Body } = await s3.send(command);
-      const fileBuffer = Buffer.from(await Body!.transformToByteArray());
+      // const command = new GetObjectCommand({
+      //   Bucket: env.R2_BUCKET_NAME!,
+      //   Key: fileKey,
+      // });
+      // const { Body } = await s3.send(command);
+      // const fileBuffer = Buffer.from(await Body!.transformToByteArray());
 
-      const pdfToMdConverter = new PdfToMarkdownConverter();
-      let pdfBlob: Blob;
+      // const pdfToMdConverter = new PdfToMarkdownConverter();
+      // let pdfBlob: Blob;
 
-      // If the file is a supported Office format, convert it to PDF first.
-      if (SUPPORTED_OFFICE_FORMATS.includes(mimeType)) {
-        console.log(`Converting ${mimeType} to PDF via Gotenberg...`);
-        const pdfBuffer = await GotenbergClient.convertOfficeToPdf(
-          fileBuffer,
-          mimeType
-        );
-        pdfBlob = new Blob([new Uint8Array(pdfBuffer)], {
-          type: 'application/pdf',
-        });
-      }
-      // If the file is already a PDF, just create a Blob from its buffer.
-      else if (mimeType.includes('pdf')) {
-        pdfBlob = new Blob([fileBuffer], { type: mimeType });
-      }
-      // If the file type is not supported by the pipeline, throw an error.
-      else {
-        throw new Error(`Unsupported file MIME type: ${mimeType}`);
-      }
+      // // If the file is a supported Office format, convert it to PDF first.
+      // if (SUPPORTED_OFFICE_FORMATS.includes(mimeType)) {
+      //   console.log(`Converting ${mimeType} to PDF via Gotenberg...`);
+      //   const pdfBuffer = await GotenbergClient.convertOfficeToPdf(
+      //     fileBuffer,
+      //     mimeType
+      //   );
+      //   pdfBlob = new Blob([new Uint8Array(pdfBuffer)], {
+      //     type: 'application/pdf',
+      //   });
+      // }
+      // // If the file is already a PDF, just create a Blob from its buffer.
+      // else if (mimeType.includes('pdf')) {
+      //   pdfBlob = new Blob([fileBuffer], { type: mimeType });
+      // }
+      // // If the file type is not supported by the pipeline, throw an error.
+      // else {
+      //   throw new Error(`Unsupported file MIME type: ${mimeType}`);
+      // }
 
-      // Finally, convert the PDF blob (either original or from Gotenberg) to Markdown.
-      console.log(`Converting ${name} to Markdown via AI...`);
-      const markdown = await pdfToMdConverter.convert(pdfBlob);
+      // // Finally, convert the PDF blob (either original or from Gotenberg) to Markdown.
+      // console.log(`Converting ${name} to Markdown via AI...`);
+      // const markdown = await pdfToMdConverter.convert(pdfBlob);
 
-      await documentService.update(id, { extractedText: markdown });
+      // const updatedDocument = await documentService.update(id, {
+      //   extractedText: markdown,
+      // });
+
+      // if (!updatedDocument.data) {
+      //   throw new Error(`Document ${id} not updated.`);
+      // }
+
+      const embeddedChunks = await documentChunkService.storeEmbeddings(
+        document
+      );
+
+      console.log(embeddedChunks);
 
       console.log(`Document ${name} extracted...`);
     }

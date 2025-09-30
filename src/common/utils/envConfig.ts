@@ -35,6 +35,8 @@ const envSchema = z.object({
   R2_BUCKET_NAME: z.string(),
 
   GOOGLE_GENERATIVE_AI_API_KEY: z.string(),
+
+  JINA_API_KEY: z.string(),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

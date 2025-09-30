@@ -11,6 +11,7 @@ import {
   uniqueIndex,
   uuid,
   varchar,
+  vector,
 } from 'drizzle-orm/pg-core';
 
 // Enums for status and document types
@@ -54,6 +55,19 @@ export const documents = pgTable('documents', {
     .defaultNow()
     .notNull(),
   metadata: json(),
+});
+
+export const documentChunks = pgTable('document_chunks', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  documentId: uuid('document_id')
+    .notNull()
+    .references(() => documents.id, { onDelete: 'cascade' }), // Link back to the parent document
+  metadata: json(), // Optional: store page number, chunk index, etc.
+  chunkText: text('chunk_text').notNull(),
+  embeddings: vector('embeddings', { dimensions: 1024 }).notNull(), // Embedding for THIS CHUNK
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
 export const jobVacancies = pgTable('job_vacancies', {
@@ -100,10 +114,18 @@ export const candidatesRelations = relations(candidates, ({ many }) => ({
   documents: many(documents),
 }));
 
-export const documentsRelations = relations(documents, ({ one }) => ({
+export const documentsRelations = relations(documents, ({ one, many }) => ({
   candidate: one(candidates, {
     fields: [documents.candidateId],
     references: [candidates.id],
+  }),
+  chunks: many(documentChunks),
+}));
+
+export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
+  document: one(documents, {
+    fields: [documentChunks.documentId],
+    references: [documents.id],
   }),
 }));
 
