@@ -5,7 +5,7 @@ import {
   pgEnum,
   pgTable,
   // primaryKey,
-  smallint,
+  // smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -19,10 +19,16 @@ export const documentTypeEnum = pgEnum('document_type', [
   'cv',
   'project_report',
 ]);
-export const scoreCategoryEnum = pgEnum('score_category', [
-  'cv_match',
-  'project_deliverable',
+export const jobStatusEnum = pgEnum('job_status', [
+  'queued',
+  'processing',
+  'completed',
+  'failed',
 ]);
+// export const scoreCategoryEnum = pgEnum('score_category', [
+//   'cv_match',
+//   'project_deliverable',
+// ]);
 
 // Table Definitions
 export const candidates = pgTable(
@@ -79,7 +85,15 @@ export const jobVacancies = pgTable('job_vacancies', {
     .notNull(),
 });
 
-export const evaluationResults = pgTable('evaluation_results', {
+// export const EvaluationJobSchema = z.object({
+//   id: z.string().uuid(),
+//   status: z.enum(['queued', 'processing', 'completed', 'failed']),
+//   errorMessage: z.string().nullable(),
+//   createdAt: z.date(),
+//   completedAt: z.date().nullable(),
+// });
+
+export const evaluationJobs = pgTable('evaluation_jobs', {
   id: uuid('id').defaultRandom().primaryKey(),
   candidateId: uuid('candidate_id')
     .notNull()
@@ -87,6 +101,20 @@ export const evaluationResults = pgTable('evaluation_results', {
   jobVacancyId: uuid('job_vacancy_id')
     .notNull()
     .references(() => jobVacancies.id),
+  jobId: text('job_id'),
+  status: jobStatusEnum('status').default('queued').notNull(),
+  errorMessage: text('error_message'),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+});
+
+export const evaluationResults = pgTable('evaluation_results', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  evaluationJobId: uuid('evaluation_job_id')
+    .notNull()
+    .references(() => evaluationJobs.id),
   cvMatchRate: decimal('cv_match_rate', { precision: 5, scale: 2 }),
   cvFeedback: text('cv_feedback'),
   projectScore: decimal('project_score', { precision: 3, scale: 1 }),
@@ -97,21 +125,22 @@ export const evaluationResults = pgTable('evaluation_results', {
     .notNull(),
 });
 
-export const detailedScores = pgTable('detailed_scores', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  evaluationResultId: uuid('evaluation_result_id')
-    .notNull()
-    .references(() => evaluationResults.id),
-  category: scoreCategoryEnum('category').notNull(),
-  parameter: varchar('parameter', { length: 255 }).notNull(),
-  score: smallint('score').notNull(),
-  weight: decimal('weight', { precision: 3, scale: 2 }).notNull(),
-  justification: text('justification'),
-});
+// export const detailedScores = pgTable('detailed_scores', {
+//   id: uuid('id').defaultRandom().primaryKey(),
+//   evaluationResultId: uuid('evaluation_result_id')
+//     .notNull()
+//     .references(() => evaluationResults.id),
+//   category: scoreCategoryEnum('category').notNull(),
+//   parameter: varchar('parameter', { length: 255 }).notNull(),
+//   score: smallint('score').notNull(),
+//   weight: decimal('weight', { precision: 3, scale: 2 }).notNull(),
+//   justification: text('justification'),
+// });
 
 // Drizzle Relations for JOINs
 export const candidatesRelations = relations(candidates, ({ many }) => ({
   documents: many(documents),
+  evaluationJobs: many(evaluationJobs),
 }));
 
 export const documentsRelations = relations(documents, ({ one, many }) => ({
@@ -129,17 +158,17 @@ export const documentChunksRelations = relations(documentChunks, ({ one }) => ({
   }),
 }));
 
-export const evaluationResultsRelations = relations(
-  evaluationResults,
-  ({ one, many }) => ({
-    candidate: one(candidates, {
-      fields: [evaluationResults.candidateId],
-      references: [candidates.id],
-    }),
-    jobVacancy: one(jobVacancies, {
-      fields: [evaluationResults.candidateId],
-      references: [jobVacancies.id],
-    }),
-    detailedScores: many(detailedScores),
-  })
-);
+export const evaluationJobsRelations = relations(evaluationJobs, ({ one }) => ({
+  candidate: one(candidates, {
+    fields: [evaluationJobs.candidateId],
+    references: [candidates.id],
+  }),
+  jobVacancy: one(jobVacancies, {
+    fields: [evaluationJobs.jobVacancyId],
+    references: [jobVacancies.id],
+  }),
+  result: one(evaluationResults, {
+    fields: [evaluationJobs.id],
+    references: [evaluationResults.id],
+  }),
+}));

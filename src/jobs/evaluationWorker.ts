@@ -3,6 +3,7 @@ import { type Job, Worker } from 'bullmq';
 import type { InferSelectModel } from 'drizzle-orm';
 import { documentService } from '@/api/document/documentService';
 import { documentChunkService } from '@/api/documentChunk/documentChunkService';
+import { evaluationJobService } from '@/api/evaluationJob/evaluationJobService';
 import {
   GotenbergClient,
   PdfToMarkdownConverter,
@@ -96,13 +97,27 @@ const evaluationWorker = new Worker('evaluation-queue', processEvaluationJob, {
   concurrency: 5,
 });
 
-// Event listeners for logging
-evaluationWorker.on('completed', (job: Job) => {
+evaluationWorker.on('active', async (job: Job) => {
+  await evaluationJobService.updateByJobId(job.id || '', {
+    status: 'processing',
+  });
   console.log(`Job ${job.id} has completed!`);
 });
 
-evaluationWorker.on('failed', (job: Job | undefined, err: Error) => {
+// Event listeners for logging
+evaluationWorker.on('completed', async (job: Job) => {
+  await evaluationJobService.updateByJobId(job.id || '', {
+    status: 'completed',
+    completedAt: new Date(),
+  });
+  console.log(`Job ${job.id} has completed!`);
+});
+
+evaluationWorker.on('failed', async (job: Job | undefined, err: Error) => {
   if (job) {
+    await evaluationJobService.updateByJobId(job.id || '', {
+      status: 'failed',
+    });
     console.error(`Job ${job.id} has failed with ${err.message}`);
   } else {
     console.error(`A job has failed with ${err.message}`);

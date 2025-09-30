@@ -53,8 +53,8 @@ export interface ChunkerOptions {
 }
 
 const DEFAULT_OPTIONS: Required<ChunkerOptions> = {
-  maxTokensPerChunk: 512,
-  maxWordsPerChunk: 100,
+  maxTokensPerChunk: 600,
+  maxWordsPerChunk: 120,
   maxWordsHeader: 45,
   pathSeparator: ' > ',
 };

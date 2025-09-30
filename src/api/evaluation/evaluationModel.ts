@@ -3,10 +3,6 @@ import { z } from 'zod';
 
 extendZodWithOpenApi(z);
 
-// =================================================================================
-// 1. API Input Schemas (for request validation)
-// =================================================================================
-
 // Schema for the `POST /evaluate` request body
 export const EvaluatePayloadSchema = z.object({
   body: z.object({
@@ -14,17 +10,6 @@ export const EvaluatePayloadSchema = z.object({
     jobVacancyId: z.string().uuid('A valid jobVacancyId is required.'),
   }),
 });
-
-// Schema for the `GET /result/{id}` request parameters
-export const GetResultParamsSchema = z.object({
-  params: z.object({
-    id: z.string().uuid('A valid evaluation job ID is required.'),
-  }),
-});
-
-// =================================================================================
-// 2. Database Entity Schemas (mirrors the database tables)
-// =================================================================================
 
 // Represents the detailed score for a single evaluation parameter
 export const DetailedScoreSchema = z.object({
@@ -40,12 +25,12 @@ export type DetailedScore = z.infer<typeof DetailedScoreSchema>;
 // Represents the final results of a completed evaluation
 export const EvaluationResultSchema = z.object({
   id: z.string().uuid(),
-  cvMatchRate: z.number(),
-  cvFeedback: z.string(),
-  projectScore: z.number(),
-  projectFeedback: z.string(),
-  overallSummary: z.string(),
-  detailedScores: z.array(DetailedScoreSchema).optional(), // Can be included in detailed responses
+  cvMatchRate: z.coerce.number(),
+  cvFeedback: z.string().nullable(),
+  projectScore: z.coerce.number(),
+  projectFeedback: z.string().nullable(),
+  overallSummary: z.string().nullable(),
+  // detailedScores: z.array(DetailedScoreSchema).optional(),
 });
 export type EvaluationResult = z.infer<typeof EvaluationResultSchema>;
 
@@ -59,20 +44,11 @@ export const EvaluationJobSchema = z.object({
 });
 export type EvaluationJob = z.infer<typeof EvaluationJobSchema>;
 
-// =================================================================================
-// 3. API Response Schemas (for OpenAPI documentation and type safety)
-// =================================================================================
-
-// The response for a job that is 'queued' or 'processing'
-export const InProgressResponseSchema = EvaluationJobSchema.pick({
-  id: true,
-  status: true,
+export const EvaluationResultResponseSchema = z.object({
+  id: z.string(),
+  status: z.string(),
+  result: EvaluationResultSchema.optional(),
 });
-
-// The response for a job that is 'completed'
-export const CompletedResponseSchema = EvaluationJobSchema.pick({
-  id: true,
-  status: true,
-}).extend({
-  result: EvaluationResultSchema.omit({ id: true, detailedScores: true }), // Omitting fields as per the brief
-});
+export type EvaluationResultResponse = z.infer<
+  typeof EvaluationResultResponseSchema
+>;

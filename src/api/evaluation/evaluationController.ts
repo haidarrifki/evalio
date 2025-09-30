@@ -1,7 +1,6 @@
 import type { Request, RequestHandler, Response } from 'express';
+import { evaluationJobService } from '@/api/evaluationJob/evaluationJobService';
 import { evaluationService } from './evaluationService';
-
-// import { evaluationService } from './evaluationService';
 
 class EvaluationController {
   public evaluate: RequestHandler = async (req: Request, res: Response) => {
@@ -12,7 +11,23 @@ class EvaluationController {
       jobVacancyId
     );
 
-    res.status(evaluation.statusCode).send(evaluation);
+    const evaluationJob = await evaluationJobService.create({
+      candidateId,
+      jobVacancyId,
+      status: 'queued',
+      jobId: evaluation.data?.id || null,
+    });
+
+    res.status(evaluation.statusCode).send(evaluationJob);
+  };
+
+  public getResultById: RequestHandler = async (
+    req: Request,
+    res: Response
+  ) => {
+    const id = req.params.id;
+    const serviceResponse = await evaluationService.findResultById(id);
+    res.status(serviceResponse.statusCode).send(serviceResponse);
   };
 }
 

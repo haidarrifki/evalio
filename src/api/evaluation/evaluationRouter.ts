@@ -2,6 +2,7 @@ import { OpenAPIRegistry } from '@asteasolutions/zod-to-openapi';
 import express, { type Router } from 'express';
 import { z } from 'zod';
 import { createApiResponse } from '@/api-docs/openAPIResponseBuilders';
+import { ParamIdSchema } from '@/common/utils/commonValidation';
 import { validateRequest } from '@/common/utils/httpHandlers';
 import { evaluationController } from './evaluationController';
 import {
@@ -34,4 +35,18 @@ evaluationRouter.post(
   '/evaluate',
   validateRequest(EvaluatePayloadSchema),
   evaluationController.evaluate
+);
+
+// GET /evaluations/result/{id}
+evaluationRegistry.registerPath({
+  method: 'get',
+  path: '/evaluations/result/{id}',
+  tags: ['Evaluation'],
+  request: { params: ParamIdSchema.shape.params },
+  responses: createApiResponse(EvaluationResultSchema, 'Success'),
+});
+evaluationRouter.get(
+  '/:id',
+  validateRequest(ParamIdSchema),
+  evaluationController.getResultById
 );
