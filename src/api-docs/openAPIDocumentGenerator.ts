@@ -6,7 +6,6 @@ import { candidateRegistry } from '@/api/candidate/candidateRouter';
 import { documentRegistry } from '@/api/document/documentRouter';
 import { evaluationRegistry } from '@/api/evaluation/evaluationRouter';
 import { healthCheckRegistry } from '@/api/healthCheck/healthCheckRouter';
-// import { userRegistry } from '@/api/user/userRouter';
 
 export type OpenAPIDocument = ReturnType<
   OpenApiGeneratorV3['generateDocument']
@@ -15,7 +14,6 @@ export type OpenAPIDocument = ReturnType<
 export function generateOpenAPIDocument(): OpenAPIDocument {
   const registry = new OpenAPIRegistry([
     healthCheckRegistry,
-    // userRegistry,
     candidateRegistry,
     documentRegistry,
     evaluationRegistry,
