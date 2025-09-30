@@ -21,12 +21,12 @@ class EvaluationController {
     res.status(evaluation.statusCode).send(evaluationJob);
   };
 
-  public getResultById: RequestHandler = async (
+  public getResultByJobId: RequestHandler = async (
     req: Request,
     res: Response
   ) => {
     const id = req.params.id;
-    const serviceResponse = await evaluationService.findResultById(id);
+    const serviceResponse = await evaluationJobService.findByJobId(id);
     res.status(serviceResponse.statusCode).send(serviceResponse);
   };
 }

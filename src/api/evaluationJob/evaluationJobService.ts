@@ -39,6 +39,34 @@ class EvaluationJobService {
     }
   }
 
+  public async findByJobId(
+    jobId: string
+  ): Promise<ServiceResponse<EvaluationJob | null>> {
+    try {
+      const evaluationJob = await this.evaluationJobRepository.findByJobId(
+        jobId
+      );
+      if (!evaluationJob) {
+        return ServiceResponse.failure(
+          'Evaluation job not found.',
+          null,
+          StatusCodes.NOT_FOUND
+        );
+      }
+      return ServiceResponse.success('Evaluation job found.', evaluationJob);
+    } catch (ex) {
+      const errorMessage = `Error finding evaluation job with id ${jobId}: ${
+        (ex as Error).message
+      }`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while finding the evaluation job.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
   public async create(
     payload: Omit<
       EvaluationJob,

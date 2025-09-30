@@ -46,7 +46,7 @@ evaluationRegistry.registerPath({
   responses: createApiResponse(EvaluationResultSchema, 'Success'),
 });
 evaluationRouter.get(
-  '/:id',
+  '/result/:id',
   validateRequest(ParamIdSchema),
-  evaluationController.getResultById
+  evaluationController.getResultByJobId
 );

@@ -11,6 +11,12 @@ export class EvaluationJobRepository {
     });
   }
 
+  async findByJobId(jobId: string) {
+    return db.query.evaluationJobs.findFirst({
+      where: eq(evaluationJobs.jobId, jobId),
+    });
+  }
+
   public async create(payload: NewEvaluationJob) {
     const [newEvaluationJob] = await db
       .insert(evaluationJobs)

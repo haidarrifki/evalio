@@ -63,8 +63,6 @@ export class PdfToMarkdownConverter {
             data: pdfBase64,
           },
         },
-        // --- IMPROVED USER PROMPT ---
-        // This adds specific context about the document type.
         {
           text: 'Convert this CV PDF into a clean, well-structured Markdown document. Pay close attention to the logical order of all sections.',
         },

@@ -52,10 +52,9 @@ class EvaluationService {
         documents: candidateDocuments,
       });
 
-      const status = await job.getState();
       const data = {
         id: job.id || '',
-        status: 'processing',
+        status: 'queued',
       };
 
       // Step 1 & 2: Extract text and candidate info (no changes here)

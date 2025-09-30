@@ -11,6 +11,6 @@ export const commonValidations = {
 
 export const ParamIdSchema = z.object({
   params: z.object({
-    id: z.string().uuid(),
+    id: z.string(),
   }),
 });
