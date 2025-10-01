@@ -6,6 +6,7 @@ import { candidateRouter } from '@/api/candidate/candidateRouter';
 import { documentRouter } from '@/api/document/documentRouter';
 import { evaluationRouter } from '@/api/evaluation/evaluationRouter';
 import { healthCheckRouter } from '@/api/healthCheck/healthCheckRouter';
+import { jobVacancyRouter } from '@/api/jobVacancy/jobVacancyRouter';
 // import { userRouter } from '@/api/user/userRouter';
 import { openAPIRouter } from '@/api-docs/openAPIRouter';
 import errorHandler from '@/common/middleware/errorHandler';
@@ -35,7 +36,7 @@ app.use('/health-check', healthCheckRouter);
 app.use('/candidates', candidateRouter);
 app.use('/documents', documentRouter);
 app.use('/evaluations', evaluationRouter);
-
+app.use('/job-vacancies', jobVacancyRouter);
 // Swagger UI
 app.use(openAPIRouter);
 

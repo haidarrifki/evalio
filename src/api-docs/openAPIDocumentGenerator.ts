@@ -6,6 +6,7 @@ import { candidateRegistry } from '@/api/candidate/candidateRouter';
 import { documentRegistry } from '@/api/document/documentRouter';
 import { evaluationRegistry } from '@/api/evaluation/evaluationRouter';
 import { healthCheckRegistry } from '@/api/healthCheck/healthCheckRouter';
+import { jobVacancyRegistry } from '@/api/jobVacancy/jobVacancyRouter';
 
 export type OpenAPIDocument = ReturnType<
   OpenApiGeneratorV3['generateDocument']
@@ -17,6 +18,7 @@ export function generateOpenAPIDocument(): OpenAPIDocument {
     candidateRegistry,
     documentRegistry,
     evaluationRegistry,
+    jobVacancyRegistry,
   ]);
   const generator = new OpenApiGeneratorV3(registry.definitions);
 
