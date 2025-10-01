@@ -1,8 +1,18 @@
 import { StatusCodes } from 'http-status-codes';
+import type { EvaluationResult } from '@/api/evaluation/evaluationModel';
 import type { EvaluationJob } from '@/api/evaluationJob/evaluationJobModel';
 import { EvaluationJobRepository } from '@/api/evaluationJob/evaluationJobRepository';
 import { ServiceResponse } from '@/common/models/serviceResponse';
 import { logger } from '@/server';
+
+type ParsedEvaluationJob = Omit<EvaluationJob, 'result'> & {
+  result?:
+    | (Omit<EvaluationResult, 'cvMatchRate' | 'projectScore'> & {
+        cvMatchRate: number | null;
+        projectScore: number | null;
+      })
+    | null;
+};
 
 class EvaluationJobService {
   private evaluationJobRepository: EvaluationJobRepository;
@@ -41,11 +51,13 @@ class EvaluationJobService {
 
   public async findByJobId(
     jobId: string
-  ): Promise<ServiceResponse<EvaluationJob | null>> {
+  ): Promise<ServiceResponse<ParsedEvaluationJob | null>> {
     try {
       const evaluationJob = await this.evaluationJobRepository.findByJobId(
         jobId
       );
+      console.log('>>> EVALUATION JOB');
+      console.log(evaluationJob);
       if (!evaluationJob) {
         return ServiceResponse.failure(
           'Evaluation job not found.',
@@ -53,7 +65,27 @@ class EvaluationJobService {
           StatusCodes.NOT_FOUND
         );
       }
-      return ServiceResponse.success('Evaluation job found.', evaluationJob);
+      // ✅ PARSING LOGIC HERE
+      const parsedResult = evaluationJob.result
+        ? {
+            ...evaluationJob.result,
+            cvMatchRate: evaluationJob.result.cvMatchRate
+              ? parseFloat(evaluationJob.result.cvMatchRate)
+              : null,
+            projectScore: evaluationJob.result.projectScore
+              ? parseFloat(evaluationJob.result.projectScore)
+              : null,
+          }
+        : null;
+
+      const parsedEvaluationJob = {
+        ...evaluationJob,
+        result: parsedResult,
+      };
+      return ServiceResponse.success(
+        'Evaluation job found.',
+        parsedEvaluationJob
+      );
     } catch (ex) {
       const errorMessage = `Error finding evaluation job with id ${jobId}: ${
         (ex as Error).message
@@ -125,12 +157,12 @@ class EvaluationJobService {
   }
 
   public async updateByJobId(
-    id: string,
+    jobId: string,
     payload: Partial<EvaluationJob>
   ): Promise<ServiceResponse<EvaluationJob | null>> {
     try {
       const updatedCandidate = await this.evaluationJobRepository.updateByJobId(
-        id,
+        jobId,
         payload
       );
       if (!updatedCandidate) {
@@ -145,7 +177,7 @@ class EvaluationJobService {
         updatedCandidate
       );
     } catch (ex) {
-      const errorMessage = `Error updating candidate with id ${id}: ${
+      const errorMessage = `Error updating candidate with id ${jobId}: ${
         (ex as Error).message
       }`;
       logger.error(errorMessage);

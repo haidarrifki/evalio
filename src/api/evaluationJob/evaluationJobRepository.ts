@@ -22,6 +22,15 @@ export class EvaluationJobRepository {
   async findByJobId(jobId: string) {
     return db.query.evaluationJobs.findFirst({
       where: eq(evaluationJobs.jobId, jobId),
+      with: {
+        // candidate: {
+        //   with: {
+        //     documents: true,
+        //   },
+        // },
+        // jobVacancy: true,
+        result: true,
+      },
     });
   }
 

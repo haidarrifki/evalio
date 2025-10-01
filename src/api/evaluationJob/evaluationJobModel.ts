@@ -1,7 +1,8 @@
 import { extendZodWithOpenApi } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
-import { CandidateSchema } from '../candidate/candidateModel';
-import { JobVacancySchema } from '../jobVacancy/jobVacancyModel';
+import { CandidateSchema } from '@/api/candidate/candidateModel';
+import { EvaluationResultSchema } from '@/api/evaluation/evaluationModel';
+import { JobVacancySchema } from '@/api/jobVacancy/jobVacancyModel';
 
 extendZodWithOpenApi(z);
 
@@ -19,6 +20,7 @@ export const EvaluationJobSchema = z.object({
   errorMessage: z.string().nullable(),
   createdAt: z.date(),
   completedAt: z.date().nullable(),
+  result: EvaluationResultSchema.optional(),
 });
 export type EvaluationJob = z.infer<typeof EvaluationJobSchema>;
 
