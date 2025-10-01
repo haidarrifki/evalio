@@ -11,23 +11,13 @@ export const EvaluatePayloadSchema = z.object({
   }),
 });
 
-// Represents the detailed score for a single evaluation parameter
-export const DetailedScoreSchema = z.object({
-  id: z.string().uuid(),
-  category: z.enum(['cv_match', 'project_deliverable']),
-  parameter: z.string(),
-  score: z.number().min(1).max(5),
-  weight: z.number(),
-  justification: z.string().optional(),
-});
-export type DetailedScore = z.infer<typeof DetailedScoreSchema>;
-
 // Represents the final results of a completed evaluation
 export const EvaluationResultSchema = z.object({
   id: z.string().uuid(),
-  cvMatchRate: z.coerce.number(),
+  evaluationJobId: z.string(),
+  cvMatchRate: z.string().nullable(),
   cvFeedback: z.string().nullable(),
-  projectScore: z.coerce.number(),
+  projectScore: z.string().nullable(),
   projectFeedback: z.string().nullable(),
   overallSummary: z.string().nullable(),
   // detailedScores: z.array(DetailedScoreSchema).optional(),

@@ -9,6 +9,11 @@ export const DocumentSchema = z.object({
   name: z.string().nullable(),
   documentType: z.enum(['cv', 'project_report']),
   fileKey: z.string(),
+  metadata: z.unknown(),
+  // metadata: z.object({
+  //   size: z.number(),
+  //   mimeType: z.string(),
+  // }),
   extractedText: z.string().nullable(),
   uploadedAt: z.date(),
 });

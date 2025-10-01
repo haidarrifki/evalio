@@ -8,6 +8,14 @@ export class EvaluationJobRepository {
   async findById(id: string) {
     return db.query.evaluationJobs.findFirst({
       where: eq(evaluationJobs.id, id),
+      with: {
+        candidate: {
+          with: {
+            documents: true,
+          },
+        },
+        jobVacancy: true,
+      },
     });
   }
 
@@ -23,6 +31,15 @@ export class EvaluationJobRepository {
       .values(payload)
       .returning();
     return newEvaluationJob;
+  }
+
+  public async update(id: string, payload: UpdateEvaluationJob) {
+    const [updatedEvaluationJob] = await db
+      .update(evaluationJobs)
+      .set(payload)
+      .where(eq(evaluationJobs.id, id))
+      .returning();
+    return updatedEvaluationJob;
   }
 
   public async updateByJobId(jobId: string, payload: UpdateEvaluationJob) {

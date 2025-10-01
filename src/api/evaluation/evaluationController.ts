@@ -11,14 +11,7 @@ class EvaluationController {
       jobVacancyId
     );
 
-    const evaluationJob = await evaluationJobService.create({
-      candidateId,
-      jobVacancyId,
-      status: 'queued',
-      jobId: evaluation.data?.id || null,
-    });
-
-    res.status(evaluation.statusCode).send(evaluationJob);
+    res.status(evaluation.statusCode).send(evaluation);
   };
 
   public getResultByJobId: RequestHandler = async (

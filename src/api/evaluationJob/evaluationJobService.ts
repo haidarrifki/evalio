@@ -70,7 +70,7 @@ class EvaluationJobService {
   public async create(
     payload: Omit<
       EvaluationJob,
-      'id' | 'createdAt' | 'errorMessage' | 'completedAt'
+      'id' | 'createdAt' | 'errorMessage' | 'completedAt' | 'jobId'
     >
   ): Promise<ServiceResponse<EvaluationJob | null>> {
     try {
@@ -85,6 +85,39 @@ class EvaluationJobService {
       logger.error(errorMessage);
       return ServiceResponse.failure(
         'An error occurred while creating the candidate.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  public async update(
+    id: string,
+    payload: Partial<EvaluationJob>
+  ): Promise<ServiceResponse<EvaluationJob | null>> {
+    try {
+      const updatedEvaluationJob = await this.evaluationJobRepository.update(
+        id,
+        payload
+      );
+      if (!updatedEvaluationJob) {
+        return ServiceResponse.failure(
+          'Evaluation job not found for update.',
+          null,
+          StatusCodes.NOT_FOUND
+        );
+      }
+      return ServiceResponse.success(
+        'Evaluation job updated successfully.',
+        updatedEvaluationJob
+      );
+    } catch (ex) {
+      const errorMessage = `Error updating evaluation job with id ${id}: ${
+        (ex as Error).message
+      }`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while updating the evaluation job.',
         null,
         StatusCodes.INTERNAL_SERVER_ERROR
       );

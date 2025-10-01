@@ -5,7 +5,11 @@ import { jobVacancyService } from '@/api/jobVacancy/jobVacancyService';
 import { ServiceResponse } from '@/common/models/serviceResponse';
 import { evaluationQueue } from '@/jobs/evaluationQueue';
 import { logger } from '@/server';
-import type { EvaluationResultResponse } from './evaluationModel';
+import { evaluationJobService } from '../evaluationJob/evaluationJobService';
+import type {
+  EvaluationResult,
+  EvaluationResultResponse,
+} from './evaluationModel';
 import { EvaluationRepository } from './evaluationRepository';
 
 class EvaluationService {
@@ -13,6 +17,73 @@ class EvaluationService {
 
   constructor(repository: EvaluationRepository = new EvaluationRepository()) {
     this.evaluationRepository = repository;
+  }
+
+  public async create(
+    payload: Omit<
+      EvaluationResult,
+      | 'id'
+      | 'createdAt'
+      | 'cvMatchRate'
+      | 'cvFeedback'
+      | 'projectScore'
+      | 'projectFeedback'
+      | 'overallSummary'
+    >
+  ): Promise<ServiceResponse<EvaluationResult | null>> {
+    try {
+      const newEvaluationResult = await this.evaluationRepository.create(
+        payload
+      );
+      return ServiceResponse.success(
+        'Evaluation result created successfully.',
+        newEvaluationResult,
+        StatusCodes.CREATED
+      );
+    } catch (ex) {
+      const errorMessage = `Error creating evaluation result: ${
+        (ex as Error).message
+      }`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while creating the evaluation result.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+
+  public async update(
+    id: string,
+    payload: Partial<EvaluationResult>
+  ): Promise<ServiceResponse<EvaluationResult | null>> {
+    try {
+      const updatedEvaluationResult = await this.evaluationRepository.update(
+        id,
+        payload
+      );
+      if (!updatedEvaluationResult) {
+        return ServiceResponse.failure(
+          'Evaluation result not found for update.',
+          null,
+          StatusCodes.NOT_FOUND
+        );
+      }
+      return ServiceResponse.success(
+        'Evaluation result updated successfully.',
+        updatedEvaluationResult
+      );
+    } catch (ex) {
+      const errorMessage = `Error updating evaluation result with id ${id}: ${
+        (ex as Error).message
+      }`;
+      logger.error(errorMessage);
+      return ServiceResponse.failure(
+        'An error occurred while updating the evaluation result.',
+        null,
+        StatusCodes.INTERNAL_SERVER_ERROR
+      );
+    }
   }
 
   public async processEvaluate(
@@ -48,8 +119,18 @@ class EvaluationService {
         );
       }
 
+      const evaluationJob = await evaluationJobService.create({
+        candidateId,
+        jobVacancyId,
+        status: 'queued',
+      });
+
       const job: Job = await evaluationQueue.add('evaluate-candidate', {
-        documents: candidateDocuments,
+        evaluationJobId: evaluationJob.data?.id,
+      });
+
+      await evaluationJobService.update(evaluationJob.data?.id || '', {
+        jobId: job.id,
       });
 
       const data = {

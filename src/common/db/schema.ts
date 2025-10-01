@@ -5,7 +5,7 @@ import {
   pgEnum,
   pgTable,
   // primaryKey,
-  // smallint,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
@@ -25,10 +25,10 @@ export const jobStatusEnum = pgEnum('job_status', [
   'completed',
   'failed',
 ]);
-// export const scoreCategoryEnum = pgEnum('score_category', [
-//   'cv_match',
-//   'project_deliverable',
-// ]);
+export const scoreCategoryEnum = pgEnum('score_category', [
+  'cv_match',
+  'project_deliverable',
+]);
 
 // Table Definitions
 export const candidates = pgTable(
@@ -85,14 +85,6 @@ export const jobVacancies = pgTable('job_vacancies', {
     .notNull(),
 });
 
-// export const EvaluationJobSchema = z.object({
-//   id: z.string().uuid(),
-//   status: z.enum(['queued', 'processing', 'completed', 'failed']),
-//   errorMessage: z.string().nullable(),
-//   createdAt: z.date(),
-//   completedAt: z.date().nullable(),
-// });
-
 export const evaluationJobs = pgTable('evaluation_jobs', {
   id: uuid('id').defaultRandom().primaryKey(),
   candidateId: uuid('candidate_id')
@@ -125,17 +117,17 @@ export const evaluationResults = pgTable('evaluation_results', {
     .notNull(),
 });
 
-// export const detailedScores = pgTable('detailed_scores', {
-//   id: uuid('id').defaultRandom().primaryKey(),
-//   evaluationResultId: uuid('evaluation_result_id')
-//     .notNull()
-//     .references(() => evaluationResults.id),
-//   category: scoreCategoryEnum('category').notNull(),
-//   parameter: varchar('parameter', { length: 255 }).notNull(),
-//   score: smallint('score').notNull(),
-//   weight: decimal('weight', { precision: 3, scale: 2 }).notNull(),
-//   justification: text('justification'),
-// });
+export const detailedScores = pgTable('detailed_scores', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  evaluationResultId: uuid('evaluation_result_id')
+    .notNull()
+    .references(() => evaluationResults.id),
+  category: scoreCategoryEnum('category').notNull(),
+  parameter: varchar('parameter', { length: 255 }).notNull(),
+  score: smallint('score').notNull(),
+  weight: decimal('weight', { precision: 3, scale: 2 }).notNull(),
+  justification: text('justification'),
+});
 
 // Drizzle Relations for JOINs
 export const candidatesRelations = relations(candidates, ({ many }) => ({
@@ -172,3 +164,14 @@ export const evaluationJobsRelations = relations(evaluationJobs, ({ one }) => ({
     references: [evaluationResults.id],
   }),
 }));
+
+export const evaluationResultsRelations = relations(
+  evaluationResults,
+  ({ many, one }) => ({
+    evaluationJob: one(evaluationJobs, {
+      fields: [evaluationResults.evaluationJobId],
+      references: [evaluationJobs.id],
+    }),
+    detailedScores: many(detailedScores),
+  })
+);
