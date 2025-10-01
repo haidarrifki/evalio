@@ -107,9 +107,9 @@ export const evaluationResults = pgTable('evaluation_results', {
   evaluationJobId: uuid('evaluation_job_id')
     .notNull()
     .references(() => evaluationJobs.id),
-  cvMatchRate: decimal('cv_match_rate', { precision: 3, scale: 2 }),
+  cvMatchRate: decimal('cv_match_rate', { precision: 5, scale: 2 }),
   cvFeedback: text('cv_feedback'),
-  projectScore: decimal('project_score', { precision: 2, scale: 1 }),
+  projectScore: decimal('project_score', { precision: 3, scale: 1 }),
   projectFeedback: text('project_feedback'),
   overallSummary: text('overall_summary'),
   createdAt: timestamp('created_at', { withTimezone: true })
