@@ -70,7 +70,8 @@
   },
   "tsup": {
     "entry": [
-      "src/index.ts"
+      "src/index.ts",
+      "src/jobs/worker.ts"
     ],
     "outDir": "dist",
     "format": [
